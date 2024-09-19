@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tornamesa Scratch</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        #turntable {
+            width: 300px;
+            height: 300px;
+            background-color: #222;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        #record {
+            width: 90%;
+            height: 90%;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/7/74/Black_vinyl_record.png');
+            background-size: cover;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        #tonearm {
+            width: 10px;
+            height: 100px;
+            background-color: #333;
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="turntable">
+        <div id="record"></div>
+        <div id="tonearm"></div>
+    </div>
+    <audio id="scratchSound1" src="./vol1.mp3" preload="auto"></audio>
+    <audio id="scratchSound2" src="https://www.soundjay.com/button/sounds/scratch-sound2.mp3" preload="auto"></audio>
+    <audio id="scratchSound3" src="https://www.soundjay.com/button/sounds/scratch-sound3.mp3" preload="auto"></audio>
+    
+    <script>
+        const record = document.getElementById('record');
+        const sounds = [
+            document.getElementById('scratchSound1'),
+            document.getElementById('scratchSound2'),
+            document.getElementById('scratchSound3')
+        ];
+
+        let isDragging = false;
+        let currentSound = null;
+
+        const playRandomScratch = () => {
+            const randomIndex = Math.floor(Math.random() * sounds.length);
+            if (currentSound) {
+                currentSound.pause();
+            }
+            currentSound = sounds[randomIndex];
+            currentSound.currentTime = 0; // Reiniciar sonido
+            currentSound.play();
+        };
+
+        const handleMove = (event) => {
+            if (isDragging) {
+                const touch = event.touches ? event.touches[0] : event;
+                const rect = record.getBoundingClientRect();
+                const x = touch.clientX - rect.left - rect.width / 2;
+
+                // Mover el disco
+                record.style.transform = `translate(-50%, -50%) rotate(${x / 10}deg)`;
+
+                // Reproducir sonido
+                playRandomScratch();
+            }
+        };
+
+        record.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            isDragging = true;
+        });
+
+        record.addEventListener('mouseup', () => {
+            isDragging = false;
+            if (currentSound) {
+                currentSound.pause();
+                currentSound.currentTime = 0; // Reiniciar sonido
+            }
+        });
+
+        record.addEventListener('mouseleave', () => {
+            isDragging = false;
+            if (currentSound) {
+                currentSound.pause();
+                currentSound.currentTime = 0; // Reiniciar sonido
+            }
+        });
+
+        // Para dispositivos táctiles
+        record.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDragging = true;
+        });
+
+        record.addEventListener('touchend', () => {
+            isDragging = false;
+            if (currentSound) {
+                currentSound.pause();
+                currentSound.currentTime = 0; // Reiniciar sonido
+            }
+        });
+        
+        record.addEventListener('touchmove', handleMove);
+        document.addEventListener('mousemove', handleMove);
+    </script>
+</body>
+</html>
