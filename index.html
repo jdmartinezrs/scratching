@@ -25,7 +25,7 @@
             position: relative;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
             overflow: hidden;
-            margin: 0 20px; /* Espacio entre los discos y el controlador */
+            margin: 0 20px;
         }
         .record {
             width: 90%;
@@ -122,13 +122,17 @@
             <div class="touchIndicator"></div>
         </div>
     </div>
-    <audio id="scratchSound1" src="./vol1.mp3" preload="auto"></audio>
-    <audio id="scratchSound2" src="./scratch-acapella-dcm-vol8.mp3" preload="auto"></audio>
-    <audio id="scratchSound3" src="./samples-dcm-vol4-scratch-acapella.mp3" preload="auto"></audio>
-    
-    <audio id="effectSound1" src="./effect1.mp3" preload="auto"></audio>
-    <audio id="effectSound2" src="./effect2.mp3" preload="auto"></audio>
-    <audio id="effectSound3" src="./effect3.mp3" preload="auto"></audio>
+
+    <audio id="scratchSound1" preload="auto"></audio>
+    <audio id="scratchSound2" preload="auto"></audio>
+    <audio id="scratchSound3" preload="auto"></audio>
+
+    <audio id="buttonSound1" preload="auto"></audio>
+    <audio id="buttonSound2" preload="auto"></audio>
+    <audio id="buttonSound3" preload="auto"></audio>
+    <audio id="buttonSound4" preload="auto"></audio>
+    <audio id="buttonSound5" preload="auto"></audio>
+    <audio id="buttonSound6" preload="auto"></audio>
 
     <script>
         const records = [
@@ -136,16 +140,32 @@
             document.getElementById('record2')
         ];
 
-        const sounds1 = [
-            document.getElementById('scratchSound1'),
-            document.getElementById('scratchSound2'),
-            document.getElementById('scratchSound3')
+        // Sonidos para los discos
+        const scratchSounds = [
+            [
+                "samples-dcm-vol4-scratch-acapella.mp3", // Cambia por las URL de tus audios
+                "scratch-acapella-dcm-vol8.mp3",
+                "vol1.mp3"
+            ],
+            [
+                "url_del_sonido_4.mp3", // Cambia por las URL de tus audios
+                "url_del_sonido_5.mp3",
+                "url_del_sonido_6.mp3"
+            ]
         ];
 
-        const sounds2 = [
-            document.getElementById('effectSound1'),
-            document.getElementById('effectSound2'),
-            document.getElementById('effectSound3')
+        // Sonidos para los botones
+        const buttonSounds = [
+            [
+                "Funk Drum Groove (105 BPM) - DailyBackingTracks (youtube).mp3", // Cambia por las URL de tus audios
+                "The Poets Of Rhythm - North Carolina (Breakbeat Edit) - WillDaPill (youtube).mp3",
+                "url_del_audio_3.mp3"
+            ],
+            [
+                "url_del_audio_4.mp3", // Cambia por las URL de tus audios
+                "url_del_audio_5.mp3",
+                "url_del_audio_6.mp3"
+            ]
         ];
 
         let currentSound1 = null;
@@ -155,20 +175,15 @@
         let rotationDegree1 = 0;
         let rotationDegree2 = 0;
 
-        const playRandomScratch = (sounds, currentSound) => {
+        const playRandomSound = (sounds, audioElement) => {
             const randomIndex = Math.floor(Math.random() * sounds.length);
-            if (currentSound) {
-                currentSound.pause();
-            }
-            currentSound = sounds[randomIndex];
-            currentSound.currentTime = 0; // Reiniciar sonido
-            currentSound.play();
-            return currentSound;
+            audioElement.src = sounds[randomIndex];
+            audioElement.currentTime = 0; // Reiniciar sonido
+            audioElement.play();
         };
 
         const handleMove = (event, recordIndex) => {
             const record = records[recordIndex];
-            const sounds = recordIndex === 0 ? sounds1 : sounds2;
             let isDragging = recordIndex === 0 ? isDragging1 : isDragging2;
             let rotationDegree = recordIndex === 0 ? rotationDegree1 : rotationDegree2;
 
@@ -178,11 +193,8 @@
                 const x = touch.clientX - rect.left - rect.width / 2;
 
                 // Rotar el disco
-                rotationDegree += x / 10; // Modifica el divisor para ajustar la sensibilidad
+                rotationDegree += x / 10;
                 record.style.transform = `translate(-50%, -50%) rotate(${rotationDegree}deg)`;
-
-                // Reproducir sonido
-                playRandomScratch(sounds, currentSound);
             }
 
             // Actualizar el estado
@@ -198,7 +210,7 @@
         records[0].addEventListener('mousedown', (e) => {
             e.preventDefault();
             isDragging1 = true;
-            currentSound1 = playRandomScratch(sounds1, currentSound1); // Reproducir sonido al iniciar el arrastre
+            playRandomSound(scratchSounds[0], document.getElementById('scratchSound1')); // Reproducir sonido al iniciar el arrastre
         });
 
         records[0].addEventListener('mouseup', () => {
@@ -220,7 +232,7 @@
         records[1].addEventListener('mousedown', (e) => {
             e.preventDefault();
             isDragging2 = true;
-            currentSound2 = playRandomScratch(sounds2, currentSound2); // Reproducir sonido al iniciar el arrastre
+            playRandomSound(scratchSounds[1], document.getElementById('scratchSound2')); // Reproducir sonido al iniciar el arrastre
         });
 
         records[1].addEventListener('mouseup', () => {
@@ -244,18 +256,10 @@
             record.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 index === 0 ? (isDragging1 = true) : (isDragging2 = true);
-                currentSound1 = playRandomScratch(sounds1, currentSound1); // Reproducir sonido al iniciar el arrastre
             });
 
             record.addEventListener('touchend', () => {
                 index === 0 ? (isDragging1 = false) : (isDragging2 = false);
-                if (index === 0 && currentSound1) {
-                    currentSound1.pause();
-                    currentSound1.currentTime = 0; // Reiniciar sonido
-                } else if (index === 1 && currentSound2) {
-                    currentSound2.pause();
-                    currentSound2.currentTime = 0; // Reiniciar sonido
-                }
             });
 
             record.addEventListener('touchmove', (e) => handleMove(e, index));
@@ -264,22 +268,26 @@
 
         // Manejo de botones
         document.getElementById('play1').addEventListener('click', () => {
-            currentSound1 = playRandomScratch(sounds1, currentSound1);
+            playRandomSound(buttonSounds[0], document.getElementById('buttonSound1'));
         });
 
         document.getElementById('play2').addEventListener('click', () => {
-            currentSound2 = playRandomScratch(sounds2, currentSound2);
+            playRandomSound(buttonSounds[1], document.getElementById('buttonSound2'));
         });
 
         document.getElementById('stop').addEventListener('click', () => {
-            if (currentSound1) {
-                currentSound1.pause();
-                currentSound1.currentTime = 0;
-            }
-            if (currentSound2) {
-                currentSound2.pause();
-                currentSound2.currentTime = 0;
-            }
+            const audioElements = [
+                document.getElementById('scratchSound1'),
+                document.getElementById('scratchSound2'),
+                document.getElementById('buttonSound1'),
+                document.getElementById('buttonSound2')
+            ];
+            audioElements.forEach(audio => {
+                if (audio) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }
+            });
         });
 
         // Manejo del crossfader
@@ -295,8 +303,8 @@
                 faderHandle.style.left = `${x}px`;
                 const volume1 = 1 - (x / (rect.width - faderHandle.offsetWidth));
                 const volume2 = x / (rect.width - faderHandle.offsetWidth);
-                if (currentSound1) currentSound1.volume = volume1;
-                if (currentSound2) currentSound2.volume = volume2;
+                if (document.getElementById('scratchSound1')) document.getElementById('scratchSound1').volume = volume1;
+                if (document.getElementById('scratchSound2')) document.getElementById('scratchSound2').volume = volume2;
             };
 
             const onMouseUp = () => {
