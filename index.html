@@ -13,7 +13,11 @@
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
         }
-        #turntable {
+        #setup {
+            display: flex;
+            align-items: center;
+        }
+        .turntable {
             width: 300px;
             height: 300px;
             background-color: #222;
@@ -21,8 +25,9 @@
             position: relative;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
             overflow: hidden;
+            margin: 0 20px; /* Espacio entre los discos y el controlador */
         }
-        #record {
+        .record {
             width: 90%;
             height: 90%;
             background-image: url('https://upload.wikimedia.org/wikipedia/commons/7/74/Black_vinyl_record.png');
@@ -35,7 +40,7 @@
             cursor: pointer;
             transition: transform 0.1s;
         }
-        #tonearm {
+        .tonearm {
             width: 10px;
             height: 100px;
             background-color: #333;
@@ -45,29 +50,112 @@
             transform: translateX(-50%);
             border-radius: 5px;
         }
+        .touchIndicator {
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 20px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #444;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #666;
+        }
+        #crossfader {
+            width: 200px;
+            height: 20px;
+            background-color: #333;
+            position: relative;
+            border-radius: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        #faderHandle {
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            border-radius: 50%;
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
     </style>
 </head>
 <body>
-    <div id="turntable">
-        <div id="record"></div>
-        <div id="tonearm"></div>
+    <div id="setup">
+        <div class="turntable">
+            <div class="record" id="record1"></div>
+            <div class="tonearm"></div>
+            <div class="touchIndicator"></div>
+        </div>
+        <div id="controls">
+            <button id="play1">Reproducir 1</button>
+            <button id="play2">Reproducir 2</button>
+            <button id="stop">Detener</button>
+            <div id="crossfader">
+                <div id="faderHandle"></div>
+            </div>
+        </div>
+        <div class="turntable">
+            <div class="record" id="record2"></div>
+            <div class="tonearm"></div>
+            <div class="touchIndicator"></div>
+        </div>
     </div>
     <audio id="scratchSound1" src="./vol1.mp3" preload="auto"></audio>
-    <audio id="scratchSound2" src="https://www.soundjay.com/button/sounds/scratch-sound2.mp3" preload="auto"></audio>
-    <audio id="scratchSound3" src="https://www.soundjay.com/button/sounds/scratch-sound3.mp3" preload="auto"></audio>
+    <audio id="scratchSound2" src="./scratch-acapella-dcm-vol8.mp3" preload="auto"></audio>
+    <audio id="scratchSound3" src="./samples-dcm-vol4-scratch-acapella.mp3" preload="auto"></audio>
     
+    <audio id="effectSound1" src="./effect1.mp3" preload="auto"></audio>
+    <audio id="effectSound2" src="./effect2.mp3" preload="auto"></audio>
+    <audio id="effectSound3" src="./effect3.mp3" preload="auto"></audio>
+
     <script>
-        const record = document.getElementById('record');
-        const sounds = [
+        const records = [
+            document.getElementById('record1'),
+            document.getElementById('record2')
+        ];
+
+        const sounds1 = [
             document.getElementById('scratchSound1'),
             document.getElementById('scratchSound2'),
             document.getElementById('scratchSound3')
         ];
 
-        let isDragging = false;
-        let currentSound = null;
+        const sounds2 = [
+            document.getElementById('effectSound1'),
+            document.getElementById('effectSound2'),
+            document.getElementById('effectSound3')
+        ];
 
-        const playRandomScratch = () => {
+        let currentSound1 = null;
+        let currentSound2 = null;
+        let isDragging1 = false;
+        let isDragging2 = false;
+        let rotationDegree1 = 0;
+        let rotationDegree2 = 0;
+
+        const playRandomScratch = (sounds, currentSound) => {
             const randomIndex = Math.floor(Math.random() * sounds.length);
             if (currentSound) {
                 currentSound.pause();
@@ -75,59 +163,150 @@
             currentSound = sounds[randomIndex];
             currentSound.currentTime = 0; // Reiniciar sonido
             currentSound.play();
+            return currentSound;
         };
 
-        const handleMove = (event) => {
+        const handleMove = (event, recordIndex) => {
+            const record = records[recordIndex];
+            const sounds = recordIndex === 0 ? sounds1 : sounds2;
+            let isDragging = recordIndex === 0 ? isDragging1 : isDragging2;
+            let rotationDegree = recordIndex === 0 ? rotationDegree1 : rotationDegree2;
+
             if (isDragging) {
                 const touch = event.touches ? event.touches[0] : event;
                 const rect = record.getBoundingClientRect();
                 const x = touch.clientX - rect.left - rect.width / 2;
 
-                // Mover el disco
-                record.style.transform = `translate(-50%, -50%) rotate(${x / 10}deg)`;
+                // Rotar el disco
+                rotationDegree += x / 10; // Modifica el divisor para ajustar la sensibilidad
+                record.style.transform = `translate(-50%, -50%) rotate(${rotationDegree}deg)`;
 
                 // Reproducir sonido
-                playRandomScratch();
+                playRandomScratch(sounds, currentSound);
+            }
+
+            // Actualizar el estado
+            if (recordIndex === 0) {
+                isDragging1 = isDragging;
+                rotationDegree1 = rotationDegree;
+            } else {
+                isDragging2 = isDragging;
+                rotationDegree2 = rotationDegree;
             }
         };
 
-        record.addEventListener('mousedown', (e) => {
+        records[0].addEventListener('mousedown', (e) => {
             e.preventDefault();
-            isDragging = true;
+            isDragging1 = true;
+            currentSound1 = playRandomScratch(sounds1, currentSound1); // Reproducir sonido al iniciar el arrastre
         });
 
-        record.addEventListener('mouseup', () => {
-            isDragging = false;
-            if (currentSound) {
-                currentSound.pause();
-                currentSound.currentTime = 0; // Reiniciar sonido
+        records[0].addEventListener('mouseup', () => {
+            isDragging1 = false;
+            if (currentSound1) {
+                currentSound1.pause();
+                currentSound1.currentTime = 0; // Reiniciar sonido
             }
         });
 
-        record.addEventListener('mouseleave', () => {
-            isDragging = false;
-            if (currentSound) {
-                currentSound.pause();
-                currentSound.currentTime = 0; // Reiniciar sonido
+        records[0].addEventListener('mouseleave', () => {
+            isDragging1 = false;
+            if (currentSound1) {
+                currentSound1.pause();
+                currentSound1.currentTime = 0; // Reiniciar sonido
+            }
+        });
+
+        records[1].addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            isDragging2 = true;
+            currentSound2 = playRandomScratch(sounds2, currentSound2); // Reproducir sonido al iniciar el arrastre
+        });
+
+        records[1].addEventListener('mouseup', () => {
+            isDragging2 = false;
+            if (currentSound2) {
+                currentSound2.pause();
+                currentSound2.currentTime = 0; // Reiniciar sonido
+            }
+        });
+
+        records[1].addEventListener('mouseleave', () => {
+            isDragging2 = false;
+            if (currentSound2) {
+                currentSound2.pause();
+                currentSound2.currentTime = 0; // Reiniciar sonido
             }
         });
 
         // Para dispositivos táctiles
-        record.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            isDragging = true;
+        records.forEach((record, index) => {
+            record.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                index === 0 ? (isDragging1 = true) : (isDragging2 = true);
+                currentSound1 = playRandomScratch(sounds1, currentSound1); // Reproducir sonido al iniciar el arrastre
+            });
+
+            record.addEventListener('touchend', () => {
+                index === 0 ? (isDragging1 = false) : (isDragging2 = false);
+                if (index === 0 && currentSound1) {
+                    currentSound1.pause();
+                    currentSound1.currentTime = 0; // Reiniciar sonido
+                } else if (index === 1 && currentSound2) {
+                    currentSound2.pause();
+                    currentSound2.currentTime = 0; // Reiniciar sonido
+                }
+            });
+
+            record.addEventListener('touchmove', (e) => handleMove(e, index));
+            document.addEventListener('mousemove', (e) => handleMove(e, index));
         });
 
-        record.addEventListener('touchend', () => {
-            isDragging = false;
-            if (currentSound) {
-                currentSound.pause();
-                currentSound.currentTime = 0; // Reiniciar sonido
+        // Manejo de botones
+        document.getElementById('play1').addEventListener('click', () => {
+            currentSound1 = playRandomScratch(sounds1, currentSound1);
+        });
+
+        document.getElementById('play2').addEventListener('click', () => {
+            currentSound2 = playRandomScratch(sounds2, currentSound2);
+        });
+
+        document.getElementById('stop').addEventListener('click', () => {
+            if (currentSound1) {
+                currentSound1.pause();
+                currentSound1.currentTime = 0;
+            }
+            if (currentSound2) {
+                currentSound2.pause();
+                currentSound2.currentTime = 0;
             }
         });
-        
-        record.addEventListener('touchmove', handleMove);
-        document.addEventListener('mousemove', handleMove);
+
+        // Manejo del crossfader
+        const faderHandle = document.getElementById('faderHandle');
+        const crossfader = document.getElementById('crossfader');
+
+        faderHandle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            const onMouseMove = (event) => {
+                const rect = crossfader.getBoundingClientRect();
+                let x = event.clientX - rect.left;
+                x = Math.max(0, Math.min(x, rect.width - faderHandle.offsetWidth));
+                faderHandle.style.left = `${x}px`;
+                const volume1 = 1 - (x / (rect.width - faderHandle.offsetWidth));
+                const volume2 = x / (rect.width - faderHandle.offsetWidth);
+                if (currentSound1) currentSound1.volume = volume1;
+                if (currentSound2) currentSound2.volume = volume2;
+            };
+
+            const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
     </script>
 </body>
 </html>
